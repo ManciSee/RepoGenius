@@ -97,6 +97,7 @@ import requests
 import os
 import json
 import pika
+import re
 
 app = Flask(__name__)
 
@@ -189,6 +190,17 @@ def invia_repositories():
     connection.close()
     return {"status": "success", "message": "Repositories inviate con successo a RabbitMQ"}
 
+def is_valid_github_link(link):
+    # Check if the link matches the GitHub repository URL format
+    github_repo_pattern = r"^https:\/\/github\.com\/([^\/]+)\/([^\/]+)"
+    return re.match(github_repo_pattern, link)
+
+def check_github_repo_exists(link):
+    # Perform a GET request to the GitHub API to check if the repository exists
+    api_url = f"https://api.github.com/repos/{link.replace('https://github.com/', '')}"
+    response = requests.get(api_url)
+    return response.status_code == 200
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -211,11 +223,18 @@ def search():
 def searchlink():
     data = request.json
     link = data.get("link")
-    if link:
-        aggiungi_repository(link)
-        return jsonify({"status": "success", "message": "Repository aggiunto con successo.", "repository": link})
-    else:
+
+    if not link:
         return jsonify({"status": "error", "message": "Nessun link fornito."}), 400
+
+    if not is_valid_github_link(link):
+        return jsonify({"status": "error", "message": "Il link fornito non è un link valido di GitHub."}), 400
+
+    if not check_github_repo_exists(link):
+        return jsonify({"status": "error", "message": "Il repository non esiste su GitHub."}), 400
+
+    aggiungi_repository(link)
+    return jsonify({"status": "success", "message": "Repository aggiunto con successo.", "repository": link})
 
 @app.route("/send", methods=["POST"])
 def send():

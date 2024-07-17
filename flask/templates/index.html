@@ -92,11 +92,12 @@
                     <form id="singleFieldForm" class="bg-white p-4 rounded shadow-md w-full h-full flex flex-col justify-center">
                         <h2 class="title">Aggiungi Repository</h2>
                         <div class="mb-4">
-                            <label for="singleField" class="block text-gray-700">Link Repository</label>
+                            <label for="singleField" class="block text-gray-700">Link Repository GitHub</label>
                             <input type="text" id="singleField" name="singleField" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
                         </div>
                         <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Aggiungi e Invia</button>
                         <a class="flipbutton mt-4 cursor-pointer" onclick="flipToFront()">Torna alla ricerca</a>
+                        <div id="errorSingleField" class="text-red-500 mt-2"></div> <!-- Error message display -->
                     </form>
                 </div>
             </div>
@@ -135,10 +136,17 @@
             event.preventDefault();
             const link = document.getElementById('singleField').value;
 
+            // Client-side validation: Check if the link matches GitHub repository format
+            if (!/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)/.test(link)) {
+                document.getElementById('errorSingleField').innerText = "Il link fornito non è un link valido di GitHub.";
+                return;
+            }
+
             axios.post('/searchlink', {
                 link: link
             })
             .then(function (response) {
+                document.getElementById('errorSingleField').innerText = ""; // Clear any previous error message
                 return axios.post('/send');
             })
             .then(function (response) {
@@ -146,6 +154,7 @@
             })
             .catch(function (error) {
                 console.error(error);
+                document.getElementById('errorSingleField').innerText = error.response.data.message || "Si è verificato un errore durante l'aggiunta del repository.";
             });
         });
 

@@ -244,5 +244,16 @@ def send():
     else:
         return jsonify(result), 500
 
+@app.route('/analysis_results', methods=['POST'])
+def analysis_results():
+    event_data = request.json
+    # Puoi fare qualsiasi cosa con i dati ricevuti qui
+    print(event_data)  # Stampa i dati sulla console Flask
+    # Esempio di salvataggio su file JSON
+    with open('received_data.json', 'w') as file:
+        json.dump(event_data, file, indent=4)
+    return jsonify({"status": "success", "message": "Dati ricevuti correttamente"})
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

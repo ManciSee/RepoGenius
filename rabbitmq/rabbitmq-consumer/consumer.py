@@ -9,6 +9,7 @@ from multiprocessing import Manager
 from groq import Groq
 from dotenv import load_dotenv
 import shutil  # Add this import for folder deletion
+import requests
 
 VALID_EXTENSIONS = [
     'txt', 'md', 'markdown', 'rst', 'py', 'js', 'java', 'c', 'cpp', 'cs', 'go', 'rb', 'php', 'scala', 
@@ -122,6 +123,8 @@ def analyze_repository(repo_url, counter, lock):
     with lock:
         counter.value -= 1
         print(f" [x] Active processes: {counter.value}")
+
+    r = requests.post('http://localhost:5001/analysis_results', json=analysis_results)
 
 def keep_alive():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))

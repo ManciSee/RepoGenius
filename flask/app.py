@@ -19,6 +19,11 @@
 #             return []
 #     return repositories
 
+# def trova_repositorieslink(linguaggio,link):
+#     repositories = []
+#     repositories.extend(link)
+#     return repositories
+
 # def crea_file_repository(repositories):
 #     link_repository_list = []
 #     for repo in repositories:
@@ -86,13 +91,12 @@
 
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000)
-
+# flask/app.py
 from flask import Flask, render_template, request, jsonify
 import requests
 import os
 import json
 import pika
-import threading
 
 app = Flask(__name__)
 
@@ -110,27 +114,66 @@ def trova_repositories(linguaggio, risultati_per_pagina, pagine):
     return repositories
 
 def crea_file_repository(repositories):
-    link_repository_list = []
-    for repo in repositories:
-        link_repository_list.append(repo['html_url'])
-    
     directory = "repositories"
     if not os.path.exists(directory):
         os.makedirs(directory)
     
     file_path = os.path.join(directory, "repositories.json")
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            try:
+                dati_esistenti = json.load(file)
+                link_repository_list = dati_esistenti.get("repositories", [])
+            except json.JSONDecodeError:
+                link_repository_list = []
+    else:
+        link_repository_list = []
+
+    for repo in repositories:
+        link_repository_list.append(repo['html_url'])
+
+    with open(file_path, 'w') as file:
+        json.dump({"repositories": link_repository_list}, file, indent=4)
+
+def aggiungi_repository(link):
+    directory = "repositories"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    
+    file_path = os.path.join(directory, "repositories.json")
+    if os.path.exists(file_path):
+        with open(file_path, 'r') as file:
+            try:
+                dati_esistenti = json.load(file)
+                link_repository_list = dati_esistenti.get("repositories", [])
+            except json.JSONDecodeError:
+                link_repository_list = []
+    else:
+        link_repository_list = []
+
+    link_repository_list.append(link)
+
     with open(file_path, 'w') as file:
         json.dump({"repositories": link_repository_list}, file, indent=4)
 
 def invia_repositories():
-    directory = "repositories"
+    directory = "./repositories"
     file_path = os.path.join(directory, "repositories.json")
     if not os.path.exists(file_path):
         print("Il file repositories.json non esiste.")
         return {"status": "error", "message": "Il file repositories.json non esiste."}
 
+    # Verifica se il file è vuoto
+    if os.path.getsize(file_path) == 0:
+        print("Il file repositories.json è vuoto.")
+        return {"status": "error", "message": "Il file repositories.json è vuoto."}
+
     with open(file_path, 'r') as file:
-        dati = json.load(file)
+        try:
+            dati = json.load(file)
+        except json.JSONDecodeError:
+            print("Errore nel decodificare il file JSON.")
+            return {"status": "error", "message": "Errore nel decodificare il file JSON."}
 
     repositories = dati['repositories']
 
@@ -163,6 +206,16 @@ def search():
         return jsonify({"status": "success", "repositories": [repo['html_url'] for repo in repositories]})
     else:
         return jsonify({"status": "error", "message": "Errore nella ricerca dei repository"}), 500
+
+@app.route("/searchlink", methods=["POST"])
+def searchlink():
+    data = request.json
+    link = data.get("link")
+    if link:
+        aggiungi_repository(link)
+        return jsonify({"status": "success", "message": "Repository aggiunto con successo.", "repository": link})
+    else:
+        return jsonify({"status": "error", "message": "Nessun link fornito."}), 400
 
 @app.route("/send", methods=["POST"])
 def send():

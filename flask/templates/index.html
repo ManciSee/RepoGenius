@@ -6,30 +6,112 @@
     <title>Ricerca Repository</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        .flip-container {
+            perspective: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .flipper {
+            width: 300px;
+            height: 500px;
+            position: relative;
+            background: #f5f5f5;
+            border-radius: 20px;
+            transition: 0.6s;
+            transform-style: preserve-3d;
+        }
+        .front, .back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .front {
+            z-index: 2;
+            transform: rotateY(0deg);
+        }
+        .back {
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .flip {
+            transform: rotateY(180deg);
+        }
+        input {
+            width: 100%;
+            margin-bottom: 15px;
+            height: 40px;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        .title {
+            text-align: center;
+        }
+        .flipbutton {
+            color: #4096ee;
+            text-decoration: none;
+            text-align: left !important;
+        }
+    </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold mb-4">Ricerca Repository GitHub</h1>
-        <form id="searchForm" class="bg-white p-4 rounded shadow-md">
-            <div class="mb-4">
-                <label for="linguaggio" class="block text-gray-700">Linguaggio</label>
-                <input type="text" id="linguaggio" name="linguaggio" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
+        <h1 class="text-3xl font-bold mb-4 text-center">Ricerca Repository GitHub</h1>
+
+        <div class="flip-container">
+            <div class="flipper" id="flipper">
+                <div class="front">
+                    <form id="searchForm" class="bg-white p-4 rounded shadow-md w-full h-full flex flex-col justify-center">
+                        <h2 class="title">Cerca Repository</h2>
+                        <div class="mb-4">
+                            <label for="linguaggio" class="block text-gray-700">Linguaggio</label>
+                            <input type="text" id="linguaggio" name="linguaggio" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="risultati_per_pagina" class="block text-gray-700">Risultati per pagina</label>
+                            <input type="number" id="risultati_per_pagina" name="risultati_per_pagina" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" value="10">
+                        </div>
+                        <div class="mb-4">
+                            <label for="pagine" class="block text-gray-700">Numero di pagine</label>
+                            <input type="number" id="pagine" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" name="pagine" value="1">
+                        </div>
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Cerca</button>
+                        <button id="sendButton" type="button" class="bg-green-500 text-white px-4 py-2 rounded mt-2">Invia a RabbitMQ</button>
+                        <a class="flipbutton mt-4 cursor-pointer" onclick="flipToBack()">Aggiungi un repository singolo</a>
+                    </form>
+                </div>
+                <div class="back">
+                    <form id="singleFieldForm" class="bg-white p-4 rounded shadow-md w-full h-full flex flex-col justify-center">
+                        <h2 class="title">Aggiungi Repository</h2>
+                        <div class="mb-4">
+                            <label for="singleField" class="block text-gray-700">Link Repository</label>
+                            <input type="text" id="singleField" name="singleField" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
+                        </div>
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Aggiungi e Invia</button>
+                        <a class="flipbutton mt-4 cursor-pointer" onclick="flipToFront()">Torna alla ricerca</a>
+                    </form>
+                </div>
             </div>
-            <div class="mb-4">
-                <label for="risultati_per_pagina" class="block text-gray-700">Risultati per pagina</label>
-                <input type="number" id="risultati_per_pagina" name="risultati_per_pagina" value="10" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300">
-            </div>
-            <div class="mb-4">
-                <label for="pagine" class="block text-gray-700">Numero di pagine</label>
-                <input type="number" id="pagine" name="pagine" value="1" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300">
-            </div>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Cerca</button>
-        </form>
-        <button id="sendButton" class="bg-green-500 text-white px-4 py-2 rounded mt-4">Invia a RabbitMQ</button>
-        <div id="results" class="mt-4"></div>
+        </div>
     </div>
 
     <script>
+        function flipToBack() {
+            document.getElementById('flipper').classList.add('flip');
+        }
+
+        function flipToFront() {
+            document.getElementById('flipper').classList.remove('flip');
+        }
+
         document.getElementById('searchForm').addEventListener('submit', function(event) {
             event.preventDefault();
             const linguaggio = document.getElementById('linguaggio').value;
@@ -42,19 +124,25 @@
                 pagine: pagine
             })
             .then(function (response) {
-                const resultsDiv = document.getElementById('results');
-                resultsDiv.innerHTML = '';
-                if (response.data.status === 'success') {
-                    const ul = document.createElement('ul');
-                    response.data.repositories.forEach(repo => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `<a href="${repo}" target="_blank" class="text-blue-500">${repo}</a>`;
-                        ul.appendChild(li);
-                    });
-                    resultsDiv.appendChild(ul);
-                } else {
-                    resultsDiv.innerHTML = `<p class="text-red-500">${response.data.message}</p>`;
-                }
+                alert('Repository trovati e salvati con successo.');
+            })
+            .catch(function (error) {
+                console.error(error);
+            });
+        });
+
+        document.getElementById('singleFieldForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const link = document.getElementById('singleField').value;
+
+            axios.post('/searchlink', {
+                link: link
+            })
+            .then(function (response) {
+                return axios.post('/send');
+            })
+            .then(function (response) {
+                alert('Repository aggiunto e inviato con successo a RabbitMQ.');
             })
             .catch(function (error) {
                 console.error(error);

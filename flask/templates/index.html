@@ -6,6 +6,7 @@
     <title>Ricerca Repository</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <style>
         .flip-container {
             perspective: 1000;
@@ -60,6 +61,29 @@
             text-decoration: none;
             text-align: left !important;
         }
+
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+            transition: 0.3s;
+            width: 25%; /* Reduced width */
+            margin: auto; /* Center horizontally */
+            margin-bottom: 50px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+
+        .card img {
+            width: 80%; /* Reduced image width */
+            margin: auto; /* Center image horizontally */
+            display: block;
+        }
+
+        .card .container {
+            padding: 2px 16px;
+            text-align: center; /* Center text */
+        }
     </style>
 </head>
 <body class="bg-gray-100">
@@ -103,7 +127,65 @@
             </div>
         </div>
     </div>
+    <h1>Repositories</h1>
+    <!-- Aggiungi il div dove visualizzare i risultati -->
+    <div id="analysis-results" style="display: flex;">
+        
+        <div id="tempcard" class="card" style="display: none;">
+            <img src="https://logos-world.net/wp-content/uploads/2020/11/GitHub-Logo.png">
+            <div class="container">
+                <h4><b>John Doe</b></h4> 
+                
+            </div>
+        </div>
+    </div>
+    
+</div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const socket = io();
 
+        // Listen for the 'new_analysis_result' event
+        socket.on('new_analysis_result', function(data) {
+            const cardTemplate = document.getElementById('tempcard');
+            const clonedCard = cardTemplate.cloneNode(true);
+            clonedCard.id = 'card' + (document.querySelectorAll('.card').length + 1) + "-" + data.name;
+            clonedCard.querySelector('.container h4').innerHTML = data.name;
+            clonedCard.style.display = '';
+            clonedCard.onclick = function() {
+                window.open('http://localhost:5001/getData/'+data.name, '_blank');
+            };
+            
+            const cardContainer = document.getElementById('analysis-results');
+            cardContainer.appendChild(clonedCard);
+
+
+            //const resultsDiv = document.getElementById('results-content');
+            //resultsDiv.textContent = data.name; // Update the results content
+        });
+
+        // Funzione per ottenere i dati di analysis_results e visualizzarli
+        function getAnalysisResults() {
+            $.get("/get_analysis_results", function(data) {
+                // Manipola il DOM per visualizzare i dati ricevuti
+                let resultsDiv = $('#analysis-results');
+                resultsDiv.empty();  // Pulisce il div
+                if (data.status === "success") {
+                    let results = data.results;
+                    resultsDiv.append('<h2>Analysis Results</h2>');
+                    //resultsDiv.append('<pre>' + JSON.stringify(results, null, 4) + '</pre>');
+
+                } else {
+                    resultsDiv.append('<p>Error: ' + data.message + '</p>');
+                }
+            });
+        }
+
+        // Chiama la funzione al caricamento della pagina
+        $(document).ready(function() {
+            getAnalysisResults();
+        });
+    </script>
     <script>
         function flipToBack() {
             document.getElementById('flipper').classList.add('flip');

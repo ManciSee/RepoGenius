@@ -124,6 +124,7 @@ def analyze_repository(repo_url, counter, lock):
         counter.value -= 1
         print(f" [x] Active processes: {counter.value}")
 
+    analysis_results["name"]=repo_name
     r = requests.post('http://localhost:5001/analysis_results', json=analysis_results)
 
 def keep_alive():

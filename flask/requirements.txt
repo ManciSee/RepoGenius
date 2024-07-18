@@ -1,3 +1,4 @@
 flask
 requests
 pika
+flask-socketio

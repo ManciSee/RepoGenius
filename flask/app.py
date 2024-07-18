@@ -92,14 +92,16 @@
 # if __name__ == "__main__":
 #     app.run(host="0.0.0.0", port=5000)
 # flask/app.py
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 import requests
 import os
 import json
 import pika
 import re
+from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 def trova_repositories(linguaggio, risultati_per_pagina, pagine):
     repositories = []
@@ -158,13 +160,12 @@ def aggiungi_repository(link):
         json.dump({"repositories": link_repository_list}, file, indent=4)
 
 def invia_repositories():
-    directory = "./repositories"
+    directory = "repositories"
     file_path = os.path.join(directory, "repositories.json")
     if not os.path.exists(file_path):
         print("Il file repositories.json non esiste.")
         return {"status": "error", "message": "Il file repositories.json non esiste."}
 
-    # Verifica se il file è vuoto
     if os.path.getsize(file_path) == 0:
         print("Il file repositories.json è vuoto.")
         return {"status": "error", "message": "Il file repositories.json è vuoto."}
@@ -191,12 +192,10 @@ def invia_repositories():
     return {"status": "success", "message": "Repositories inviate con successo a RabbitMQ"}
 
 def is_valid_github_link(link):
-    # Check if the link matches the GitHub repository URL format
     github_repo_pattern = r"^https:\/\/github\.com\/([^\/]+)\/([^\/]+)"
     return re.match(github_repo_pattern, link)
 
 def check_github_repo_exists(link):
-    # Perform a GET request to the GitHub API to check if the repository exists
     api_url = f"https://api.github.com/repos/{link.replace('https://github.com/', '')}"
     response = requests.get(api_url)
     return response.status_code == 200
@@ -247,13 +246,31 @@ def send():
 @app.route('/analysis_results', methods=['POST'])
 def analysis_results():
     event_data = request.json
-    # Puoi fare qualsiasi cosa con i dati ricevuti qui
-    print(event_data)  # Stampa i dati sulla console Flask
-    # Esempio di salvataggio su file JSON
-    with open('received_data.json', 'w') as file:
+    print(event_data)
+    
+    socketio.emit('new_analysis_result', event_data)
+    name = event_data.get('name', 'default_name')  
+    directory = "analyzed_repositories"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    file_name = os.path.join(directory, f"{name}.json")
+    with open(file_name, 'w') as file:
         json.dump(event_data, file, indent=4)
-    return jsonify({"status": "success", "message": "Dati ricevuti correttamente"})
+    return jsonify({"status": "success", "results": event_data})
 
+@app.route('/getData/<filename>')
+def get_data(filename):
+    directory = "analyzed_repositories"
+    file_path = os.path.join(directory, f'{filename}.json')
+    if not os.path.exists(file_path):
+        abort(404)
+    with open(file_path, 'r') as json_file:
+        data = json.load(json_file)
+    return render_template('display.html', data=data)
+
+@socketio.on('connect')
+def handle_connect():
+    print("Client connected")
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)

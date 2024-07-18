@@ -1,5 +1,3 @@
 {
-    "repositories": [
-        "https://github.com/public-apis/public-apis"
-    ]
+  "repositories": ["https://github.com/public-apis/public-apis"]
 }

@@ -126,6 +126,12 @@ def analyze_repository(repo_url, counter, lock):
 
     analysis_results["name"]=repo_name
     r = requests.post('http://localhost:5001/analysis_results', json=analysis_results)
+    if r.status_code == 200:
+        try: 
+            shutil.rmtree(analyzed_repo_path)
+            print(f" [x] Deleted analyzed repository directory {analyzed_repo_path}")
+        except OSError as e:
+            print(f" [!] Error deleting analyzed repository directory {analyzed_repo_path}: {e}")
 
 def keep_alive():
     connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))

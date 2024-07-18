@@ -46,55 +46,22 @@
         .flip {
             transform: rotateY(180deg);
         }
-        input {
-            width: 100%;
-            margin-bottom: 15px;
-            height: 40px;
-            box-sizing: border-box;
-            padding: 10px;
-        }
-        .title {
-            text-align: center;
-        }
         .flipbutton {
             color: #4096ee;
             text-decoration: none;
             text-align: left !important;
         }
-
-        .card {
-            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
-            transition: 0.3s;
-            width: 25%; /* Reduced width */
-            margin: auto; /* Center horizontally */
-            margin-bottom: 50px;
-        }
-
-        .card:hover {
-            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
-        }
-
-        .card img {
-            width: 80%; /* Reduced image width */
-            margin: auto; /* Center image horizontally */
-            display: block;
-        }
-
-        .card .container {
-            padding: 2px 16px;
-            text-align: center; /* Center text */
-        }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="container mx-auto p-4">
-        <h1 class="text-3xl font-bold mb-4 text-center">Ricerca Repository GitHub</h1>
+        <h1 class="text-3xl font-bold mb-8 text-center mt-4">Ricerca Repository GitHub</h1>
 
         <div class="flip-container">
             <div class="flipper" id="flipper">
                 <div class="front">
                     <form id="searchForm" class="bg-white p-4 rounded shadow-md w-full h-full flex flex-col justify-center">
-                        <h2 class="title">Cerca Repository</h2>
+                        <h2 class="text-center text-xl font-semibold mb-4">Cerca Repository</h2>
                         <div class="mb-4">
                             <label for="linguaggio" class="block text-gray-700">Linguaggio</label>
                             <input type="text" id="linguaggio" name="linguaggio" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
@@ -114,38 +81,35 @@
                 </div>
                 <div class="back">
                     <form id="singleFieldForm" class="bg-white p-4 rounded shadow-md w-full h-full flex flex-col justify-center">
-                        <h2 class="title">Aggiungi Repository</h2>
+                        <h2 class="text-center text-xl font-semibold mb-4">Aggiungi Repository</h2>
                         <div class="mb-4">
                             <label for="singleField" class="block text-gray-700">Link Repository GitHub</label>
                             <input type="text" id="singleField" name="singleField" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
                         </div>
                         <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Aggiungi e Invia</button>
                         <a class="flipbutton mt-4 cursor-pointer" onclick="flipToFront()">Torna alla ricerca</a>
-                        <div id="errorSingleField" class="text-red-500 mt-2"></div> <!-- Error message display -->
+                        <div id="errorSingleField" class="text-red-500 mt-2"></div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <h1>Repositories</h1>
-    <!-- Aggiungi il div dove visualizzare i risultati -->
-    <div id="analysis-results" style="display: flex;">
-        
-        <div id="tempcard" class="card" style="display: none;">
-            <img src="https://logos-world.net/wp-content/uploads/2020/11/GitHub-Logo.png">
-            <div class="container">
-                <h4><b>John Doe</b></h4> 
-                
+    <div class="container mx-auto p-4 -mt-32">
+        <h2 class="text-2xl font-bold mb-4 text-center ">Repositories</h2>
+        <div id="analysis-results" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div id="tempcard" class="card bg-white rounded-lg shadow-md p-4" style="display: none;">
+                <img src="https://logos-world.net/wp-content/uploads/2020/11/GitHub-Logo.png" class="mx-auto h-24">
+                <div class="container text-center mt-4">
+                    <h4 class="font-bold"><b>John Doe</b></h4>
+                </div>
             </div>
         </div>
     </div>
     
-</div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         const socket = io();
 
-        // Listen for the 'new_analysis_result' event
         socket.on('new_analysis_result', function(data) {
             const cardTemplate = document.getElementById('tempcard');
             const clonedCard = cardTemplate.cloneNode(true);
@@ -158,35 +122,25 @@
             
             const cardContainer = document.getElementById('analysis-results');
             cardContainer.appendChild(clonedCard);
-
-
-            //const resultsDiv = document.getElementById('results-content');
-            //resultsDiv.textContent = data.name; // Update the results content
         });
 
-        // Funzione per ottenere i dati di analysis_results e visualizzarli
         function getAnalysisResults() {
             $.get("/get_analysis_results", function(data) {
-                // Manipola il DOM per visualizzare i dati ricevuti
                 let resultsDiv = $('#analysis-results');
-                resultsDiv.empty();  // Pulisce il div
+                resultsDiv.empty();
                 if (data.status === "success") {
                     let results = data.results;
                     resultsDiv.append('<h2>Analysis Results</h2>');
-                    //resultsDiv.append('<pre>' + JSON.stringify(results, null, 4) + '</pre>');
-
                 } else {
                     resultsDiv.append('<p>Error: ' + data.message + '</p>');
                 }
             });
         }
 
-        // Chiama la funzione al caricamento della pagina
         $(document).ready(function() {
             getAnalysisResults();
         });
-    </script>
-    <script>
+
         function flipToBack() {
             document.getElementById('flipper').classList.add('flip');
         }
@@ -218,7 +172,6 @@
             event.preventDefault();
             const link = document.getElementById('singleField').value;
 
-            // Client-side validation: Check if the link matches GitHub repository format
             if (!/^https:\/\/github\.com\/([^\/]+)\/([^\/]+)/.test(link)) {
                 document.getElementById('errorSingleField').innerText = "Il link fornito non è un link valido di GitHub.";
                 return;
@@ -228,7 +181,7 @@
                 link: link
             })
             .then(function (response) {
-                document.getElementById('errorSingleField').innerText = ""; // Clear any previous error message
+                document.getElementById('errorSingleField').innerText = "";
                 return axios.post('/send');
             })
             .then(function (response) {

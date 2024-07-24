@@ -9,10 +9,10 @@ from flask_socketio import SocketIO, emit
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-def trova_repositories(linguaggio, risultati_per_pagina, pagine):
+def trova_repositories(linguaggio, risultati_per_pagina, pagine,topic):
     repositories = []
     for pagina in range(1, pagine + 1):
-        url = f"https://api.github.com/search/repositories?q=language:{linguaggio}&sort=stars&per_page={str(risultati_per_pagina)}&page={str(pagina)}"
+        url = f"https://api.github.com/search/repositories?q=language:{linguaggio}+topic:{topic}&sort=stars&per_page={str(risultati_per_pagina)}&page={str(pagina)}"
         risposta = requests.get(url)
         if risposta.status_code == 200:
             dati = risposta.json()
@@ -20,6 +20,50 @@ def trova_repositories(linguaggio, risultati_per_pagina, pagine):
         else:
             print(f"Errore: {risposta.status_code}")
             return []
+    return repositories
+
+def trova_repositoriesfixed(linguaggio='', risultati_per_pagina='', pagine='', topic=''):
+    repositories = []
+    
+    # Check if pagine is provided and is a valid integer
+    if pagine:
+        try:
+            pagine = int(pagine)
+        except ValueError:
+            print("Errore: 'pagine' deve essere un numero intero.")
+            return []
+    else:
+        pagine = 1  # Default to 1 if not provided or empty
+
+    # Loop through each page
+    for pagina in range(1, pagine + 1):
+        query_parts = []
+        
+        # Include parameters if they are not empty strings
+        if linguaggio:
+            query_parts.append(f"language:{linguaggio}")
+        if topic:
+            query_parts.append(f"topic:{topic}")
+        
+        query = '+'.join(query_parts)
+        url = f"https://api.github.com/search/repositories?q={query}&sort=stars"
+        
+        # Add per_page parameter if it is not an empty string
+        if risultati_per_pagina:
+            url += f"&per_page={risultati_per_pagina}"
+        
+        # Add page parameter to the URL
+        url += f"&page={pagina}"
+        
+        # Make the request
+        risposta = requests.get(url)
+        if risposta.status_code == 200:
+            dati = risposta.json()
+            repositories.extend(dati['items'])
+        else:
+            print(f"Errore: {risposta.status_code}")
+            return []
+    
     return repositories
 
 def crea_file_repository(repositories):
@@ -124,10 +168,11 @@ def index():
 def search():
     data = request.json
     linguaggio = data.get("linguaggio")
+    topic = data.get("topic")
     risultati_per_pagina = int(data.get("risultati_per_pagina", 10))
     pagine = int(data.get("pagine", 1))
     
-    repositories = trova_repositories(linguaggio, risultati_per_pagina, pagine)
+    repositories = trova_repositoriesfixed(linguaggio, risultati_per_pagina, pagine,topic)
     if repositories:
         crea_file_repository(repositories)
         return jsonify({"status": "success", "repositories": [repo['html_url'] for repo in repositories]})

@@ -31,19 +31,42 @@ def analyze_code(file_path, client):
             chat_completion = client.chat.completions.create(
                 messages=[
                     {
-                        "role": "user",
-                        "content": f"""Here is a piece of code:
-                        {code_content}
+    "role": "user",
+    "content": f"""Here is a piece of code:
+    {code_content}
 Answer the following questions:
 
 1. Brief description: Write a brief description of what the code does (maximum 40 words).
 2. Code evaluation: Give an overall rating of the code from 1 to 10, considering factors like clarity, efficiency, and best practices.
+3. Code analysis:
+   a. Number of lines of code: Count the number of lines in the code.
+   b. Number of loops: Count the number of loops (for, while) in the code.
+   c. Number of if statements: Count the number of if statements in the code.
+   d. Number of functions/methods: Count the number of functions and methods in the code.
+   e. Line numbers of constructs: List the starting line numbers of each loop, if statement, and function/method in the code.
+
+4. Code improvement and refactoring:
+   a. Code improvement: Provide specific suggestions on how to improve the code, focusing on clarity, efficiency, and best practices.
+   b. Original code: Display the original code snippet.
+   c. Refactored code: Present a refactored version of the code snippet based on the improvement suggestions.
+
 Answers:
 
 1. Brief description:
 2. Code evaluation:
-                        """,
-                    }
+3. Code analysis:
+   a. Number of lines of code:
+   b. Number of loops:
+   c. Number of if statements:
+   d. Number of functions/methods:
+   e. Line numbers of constructs:
+
+4. Code improvement and refactoring:
+   a. Code improvement:
+   b. Original code:
+   c. Refactored code:
+    """
+}
                 ],
                 model="llama3-8b-8192",
             )

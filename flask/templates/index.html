@@ -63,6 +63,10 @@
                     <form id="searchForm" class="bg-white p-4 rounded shadow-md w-full h-full flex flex-col justify-center">
                         <h2 class="text-center text-xl font-semibold mb-4">Cerca Repository</h2>
                         <div class="mb-4">
+                            <label for="topic" class="block text-gray-700">Topic</label>
+                            <input type="text" id="topic" name="topic" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
+                        </div>
+                        <div class="mb-4">
                             <label for="linguaggio" class="block text-gray-700">Linguaggio</label>
                             <input type="text" id="linguaggio" name="linguaggio" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" required>
                         </div>
@@ -154,14 +158,19 @@
             const linguaggio = document.getElementById('linguaggio').value;
             const risultati_per_pagina = document.getElementById('risultati_per_pagina').value;
             const pagine = document.getElementById('pagine').value;
-
+            const topic = document.getElementById('topic').value;
             axios.post('/search', {
+                topic:topic,
                 linguaggio: linguaggio,
                 risultati_per_pagina: risultati_per_pagina,
                 pagine: pagine
             })
             .then(function (response) {
-                alert('Repository trovati e salvati con successo.');
+                str="";
+                response.data.repositories.forEach(repo => {
+                        str=str+repo+"\n";
+                    });
+                alert('Repository trovati e salvati con successo.'+'\n'+str);
             })
             .catch(function (error) {
                 console.error(error);

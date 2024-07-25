@@ -152,11 +152,13 @@ def invia_repositories():
     return {"status": "success", "message": "Repositories inviate con successo a RabbitMQ"}
 
 def is_valid_github_link(link):
-    github_repo_pattern = r"^https:\/\/github\.com\/([^\/]+)\/([^\/]+)"
-    return re.match(github_repo_pattern, link)
+    github_repo_pattern = r"^https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$"
+    match = re.match(github_repo_pattern, link)
+    return match
 
 def check_github_repo_exists(link):
-    api_url = f"https://api.github.com/repos/{link.replace('https://github.com/', '')}"
+    normalized_link = link.rstrip('/')
+    api_url = f"https://api.github.com/repos/{normalized_link.replace('https://github.com/', '')}"
     response = requests.get(api_url)
     return response.status_code == 200
 
@@ -193,7 +195,7 @@ def searchlink():
     if not check_github_repo_exists(link):
         return jsonify({"status": "error", "message": "Il repository non esiste su GitHub."}), 400
 
-    aggiungi_repository(link)
+    aggiungi_repository(link.rstrip('/'))
     return jsonify({"status": "success", "message": "Repository aggiunto con successo.", "repository": link})
 
 @app.route("/send", methods=["POST"])
